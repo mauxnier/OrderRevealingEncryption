@@ -3,7 +3,6 @@ import random
 from string import ascii_uppercase, digits
 
 """
-Author: Killian Monnier
 Date: 2023-04-09
 
 This is a Python implementation of the ORE.
