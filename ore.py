@@ -1,19 +1,42 @@
 import hashlib
 import random
 from string import ascii_uppercase, digits
-LEN = 16
+
+"""
+Author: Killian Monnier
+Date: 2023-04-09
+
+This is a Python implementation of the ORE.
+
+The ORE is a one-way encryption scheme that allows comparison of encrypted data.
+
+The ORE function is defined as follows:
+    ORE(m, k) = SHA224(m + k) mod 3
+    
+The ORE comparison function is defined as follows:
+    ORE(m, n, k) = 0 if m = n
+                = -1 if m < n
+                = 1 if m > n
+                              
+"""
+
+LEN = 16  # Length of the ORE string
 
 
 def rnd_word(n):
+    """Generate a random string of length n"""
     return ''.join(random.choice(ascii_uppercase + digits) for _ in range(n))
 
 
 def prf(msg, k):
+    """Compute the ORE function"""
     pad = "0" * (LEN - len(msg))
     return int(hashlib.sha224((msg + pad + k).encode('utf-8')).hexdigest(), 16)
 
 
-def ore_enc(m, k):
+def encrypt(m, k):
+    """Encrypt an integer using ORE"""
+    m = bin(m)[2:]
     tmp_m = ""
     tmpres = ""
     for i in m:
@@ -22,7 +45,16 @@ def ore_enc(m, k):
     return tmpres
 
 
-def ore_comp(u, v):
+def decrypt(m, k):
+    """Decrypt an ORE string"""
+    dec_m = ""
+    for i in range(len(m)):
+        dec_m += str((int(m[i]) - prf(dec_m, k)) % 3)
+    return int(dec_m, 2)
+
+
+def comp_ore(u, v):
+    """Compare two ORE strings"""
     if u == v:
         return 0
     L = len(u)
@@ -35,7 +67,8 @@ def ore_comp(u, v):
         return 1
 
 
-def int_comp(u, v):
+def comp_int(u, v):
+    """Compare two integers"""
     if u == v:
         return 0
     elif u > v:
@@ -43,15 +76,18 @@ def int_comp(u, v):
     else:
         return -1
 
-cnt = 0
-tests = 100
-for i in range(tests):
-    passwd = rnd_word(10)
-    num1 = random.randrange(2**63, 2**64)
-    num2 = random.randrange(2**63, 2**64)
 
-    a = ore_enc(bin(num1)[2:], passwd)
-    b = ore_enc(bin(num2)[2:], passwd)
-    if ore_comp(a, b) == int_comp(num1, num2):
-        cnt += 1
-print("Succeded in: %d out of %d tests." % (cnt, tests))
+def test(cnt, tests):
+    """Test the ORE comparison function"""
+    for i in range(tests):
+        passwd = rnd_word(10)
+        num1 = random.randrange(2**63, 2**64)
+        num2 = random.randrange(2**63, 2**64)
+
+        a = encrypt(num1, passwd)
+        b = encrypt(num2, passwd)
+        if comp_ore(a, b) == comp_int(num1, num2):
+            cnt += 1
+        print("Succeded in: %d out of %d tests." % (cnt, tests))
+
+# test(0, 100)
